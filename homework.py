@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 
-@dataclass
+@dataclass(repr=False, eq=False)
 class InfoMessage:
     """Информационное сообщение о тренировке."""
 
@@ -13,11 +13,12 @@ class InfoMessage:
     calories: float
 
     def get_message(self) -> str:
-        return (f'Тип тренировки: {self.training_type}; '
-                f'Длительность: {self.duration:.3f} ч.; '
-                f'Дистанция: {self.distance:.3f} км; '
-                f'Ср. скорость: {self.speed:.3f} км/ч; '
-                f'Потрачено ккал: {self.calories:.3f}.')
+        answer: str = (f'Тип тренировки: {self.training_type}; '
+                       f'Длительность: {self.duration:.3f} ч.; '
+                       f'Дистанция: {self.distance:.3f} км; '
+                       f'Ср. скорость: {self.speed:.3f} км/ч; '
+                       f'Потрачено ккал: {self.calories:.3f}.')
+        return answer
 
 
 class Training:
@@ -45,7 +46,7 @@ class Training:
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        raise NotImplementedError
+        raise NotImplementedError('Subclasses should implement this!')
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -60,7 +61,6 @@ class Running(Training):
     """Тренировка: бег."""
     RUN_ENERGY_CAL_A: float = 18
     RUN_ENERGY_CAL_B: float = 20
-    M_IN_KM: float = 1000
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
@@ -117,17 +117,17 @@ class Swimming(Training):
                 * self.SWM_MASS_COEFF * self.weight)
 
 
-def read_package(workout_type: str, data: List[int]) -> Training:
+def read_package(workout_type, data: List[float]) -> Training:
     """Прочитать данные полученные от датчиков."""
-    sport_map: Dict[str, str] = {'SWM': Swimming,
-                                 'RUN': Running,
-                                 'WLK': SportsWalking}
+    sport_map: Dict[str, workout_type[Training]] = {'SWM': Swimming,
+                                                    'RUN': Running,
+                                                    'WLK': SportsWalking}
     return sport_map.get(workout_type)(*data)
 
 
 def main(training: Training) -> None:
     """Главная функция."""
-    info: str = training.show_training_info()
+    info: Training = training.show_training_info()
     print(info.get_message())
 
 
@@ -140,4 +140,7 @@ if __name__ == '__main__':
 
     for workout_type, data in packages:
         training = read_package(workout_type, data)
-        main(training)
+        if training is None:
+            raise KeyError('Workout type not found. Please try again.')
+        else:
+            main(training)
