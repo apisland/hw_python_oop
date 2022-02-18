@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Type
 
 
 @dataclass(repr=False, eq=False)
@@ -117,17 +117,20 @@ class Swimming(Training):
                 * self.SWM_MASS_COEFF * self.weight)
 
 
-def read_package(workout_type, data: List[float]) -> Training:
+def read_package(workout_type, data: List) -> Training:
     """Прочитать данные полученные от датчиков."""
-    sport_map: Dict[str, workout_type[Training]] = {'SWM': Swimming,
-                                                    'RUN': Running,
-                                                    'WLK': SportsWalking}
-    return sport_map.get(workout_type)(*data)
+    sport_map: Dict[str, Type[Training]] = {'SWM': Swimming,
+                                            'RUN': Running,
+                                            'WLK': SportsWalking}
+    if sport_map.get(workout_type) is None:
+        raise KeyError('Workout type not found. Please try again.')
+    else:
+        return sport_map[workout_type](*data)
 
 
 def main(training: Training) -> None:
     """Главная функция."""
-    info: Training = training.show_training_info()
+    info: InfoMessage = training.show_training_info()
     print(info.get_message())
 
 
@@ -140,7 +143,4 @@ if __name__ == '__main__':
 
     for workout_type, data in packages:
         training = read_package(workout_type, data)
-        if training is None:
-            raise KeyError('Workout type not found. Please try again.')
-        else:
-            main(training)
+        main(training)
